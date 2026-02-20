@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手动添加功能位置方案 - Life Version Control</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: #f8fafc; }
+    h1 { font-size: 1.25rem; margin-bottom: 4px; }
+    .subtitle { color: #64748b; font-size: 0.875rem; margin-bottom: 20px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { padding: 8px 16px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; cursor: pointer; font-size: 0.85rem; }
+    .tab:hover { background: #f1f5f9; }
+    .tab.active { background: #0f766e; color: white; border-color: #0f766e; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .scheme-title { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+    .scheme-desc { color: #64748b; font-size: 0.8rem; margin-bottom: 16px; line-height: 1.5; }
+    .mockup { border: 2px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: white; max-width: 420px; margin: 0 auto; }
+    .phone { width: 375px; height: 600px; margin: 0 auto; position: relative; }
+    .screen { padding: 20px; }
+    .bottom-tab { position: absolute; bottom: 0; left: 0; right: 0; height: 56px; background: white; border-top: 1px solid #e2e8f0; display: flex; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; color: #64748b; }
+    .tab-item.active { color: #0f766e; font-weight: 500; }
+    .input-row { display: flex; gap: 8px; margin: 16px 0; }
+    .input-row input { flex: 1; height: 44px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0 12px; }
+    .input-row .btn { width: 44px; height: 44px; border-radius: 50%; background: #0f766e; color: white; border: none; }
+    .card { background: #f8fafc; border-radius: 12px; padding: 16px; margin: 12px 0; }
+    .card-title { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; }
+    .add-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; border: 1px dashed #94a3b8; background: white; color: #64748b; font-size: 0.85rem; cursor: pointer; }
+    .add-btn:hover { background: #f8fafc; }
+    .add-btn.primary { border-color: #0f766e; color: #0f766e; }
+    .highlight { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 4px 8px; font-size: 0.75rem; color: #065f46; }
+  </style>
+</head>
+<body>
+  <h1>手动添加功能位置方案</h1>
+  <p class="subtitle">请浏览以下方案，选择「手动添加」入口的放置位置</p>
+
+  <div class="tabs">
+    <div class="tab active" data-panel="a">方案 A：仅时间汇总</div>
+    <div class="tab" data-panel="b">方案 B：仅时间管理</div>
+    <div class="tab" data-panel="c">方案 C：双入口</div>
+    <div class="tab" data-panel="d">方案 D：浮动按钮</div>
+  </div>
+
+  <!-- 方案 A：仅时间汇总 -->
+  <div id="panel-a" class="panel active">
+    <div class="scheme-title">方案 A：仅时间汇总</div>
+    <div class="scheme-desc">手动添加入口只在「时间汇总」页，与时间块、饼图放在一起。时间管理页专注「专注计时」一种记录方式。</div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="screen">
+          <p class="card-title">时间管理页</p>
+          <div class="input-row">
+            <input placeholder="现在开始做什么？">
+            <button class="btn">▶</button>
+          </div>
+          <div class="card">
+            <div class="card-title">专注中</div>
+            <div style="font-size: 2rem; font-weight: 500;">00:15:32</div>
+          </div>
+          <p style="font-size: 0.75rem; color: #94a3b8;">无手动添加入口</p>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
+          <p class="card-title">时间汇总页</p>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span class="card-title">时间块</span>
+            <span class="highlight">+ 手动添加</span>
+          </div>
+          <div style="height: 80px; background: #e2e8f0; border-radius: 8px; opacity: 0.5;"></div>
+        </div>
+        <div class="bottom-tab">
+          <div class="tab-item active">时间管理</div>
+          <div class="tab-item">时间汇总</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 B：仅时间管理 -->
+  <div id="panel-b" class="panel">
+    <div class="scheme-title">方案 B：仅时间管理</div>
+    <div class="scheme-desc">手动添加入口只在「时间管理」页。用户在一个页面完成所有记录（专注计时 + 手动补录），时间汇总页只负责查看。</div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="screen">
+          <p class="card-title">时间管理页</p>
+          <div class="input-row">
+            <input placeholder="现在开始做什么？">
+            <button class="btn">▶</button>
+          </div>
+          <div class="card">
+            <div class="card-title">专注中</div>
+            <div style="font-size: 2rem; font-weight: 500;">00:15:32</div>
+          </div>
+          <button class="add-btn primary" style="width: 100%; justify-content: center; margin-top: 16px;">
+            + 手动添加时间
+          </button>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
+          <p class="card-title">时间汇总页</p>
+          <p style="font-size: 0.75rem; color: #94a3b8;">无手动添加入口，仅查看</p>
+        </div>
+        <div class="bottom-tab">
+          <div class="tab-item active">时间管理</div>
+          <div class="tab-item">时间汇总</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 C：双入口 -->
+  <div id="panel-c" class="panel">
+    <div class="scheme-title">方案 C：双入口</div>
+    <div class="scheme-desc">时间管理和时间汇总都有「手动添加」入口。用户无论在哪一页都能快速补录，减少切换。</div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="screen">
+          <p class="card-title">时间管理页</p>
+          <div class="input-row">
+            <input placeholder="现在开始做什么？">
+            <button class="btn">▶</button>
+          </div>
+          <div class="card">
+            <div class="card-title">专注中</div>
+            <div style="font-size: 2rem; font-weight: 500;">00:15:32</div>
+          </div>
+          <button class="add-btn primary" style="width: 100%; justify-content: center; margin-top: 16px;">
+            + 手动添加时间
+          </button>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
+          <p class="card-title">时间汇总页</p>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="card-title">时间块</span>
+            <span class="highlight">+ 手动添加</span>
+          </div>
+        </div>
+        <div class="bottom-tab">
+          <div class="tab-item active">时间管理</div>
+          <div class="tab-item">时间汇总</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 D：浮动按钮 -->
+  <div id="panel-d" class="panel">
+    <div class="scheme-title">方案 D：全局浮动按钮</div>
+    <div class="scheme-desc">在底部 Tab 栏上方增加一个常驻的「+」浮动按钮，无论在哪一页点击都能打开手动添加。类似很多 App 的 FAB（Floating Action Button）。</div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="screen">
+          <p class="card-title">任意页面</p>
+          <div class="input-row">
+            <input placeholder="现在开始做什么？">
+            <button class="btn">▶</button>
+          </div>
+          <div class="card">
+            <div class="card-title">专注中</div>
+            <div style="font-size: 2rem; font-weight: 500;">00:15:32</div>
+          </div>
+        </div>
+        <div style="position: absolute; bottom: 70px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: #0f766e; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(15,118,110,0.3);">
+          +
+        </div>
+        <div class="bottom-tab">
+          <div class="tab-item active">时间管理</div>
+          <div class="tab-item">时间汇总</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

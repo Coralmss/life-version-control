@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>周历网格效果 - 参考图</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 16px; background: #fff; font-size: 12px; }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .nav-left { display: flex; align-items: center; gap: 4px; }
+    .nav-left button { padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; cursor: pointer; font-size: 12px; }
+    .nav-center { font-weight: 500; }
+    .nav-tabs { display: flex; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .nav-tabs span { padding: 6px 14px; background: white; color: #64748b; font-size: 12px; }
+    .nav-tabs span.active { background: #0f766e; color: white; }
+    .grid-wrap { overflow-x: auto; }
+    .cal-table { width: 100%; min-width: 560px; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+    .cal-table th, .cal-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; }
+    .cal-table .time-cell { width: 44px; background: #f8fafc; font-size: 10px; color: #94a3b8; text-align: right; padding: 4px 6px; }
+    .cal-table .day-header { padding: 8px; text-align: center; background: #fafafa; font-weight: 500; }
+    .cal-table .day-header .w { font-size: 10px; color: #64748b; display: block; }
+    .cal-table .day-header .d { font-size: 13px; }
+    .cal-table .slot-cell { height: 28px; min-height: 28px; position: relative; }
+    .cal-table .slot-cell:nth-child(odd) { background: #fafafa; }
+    .block { position: absolute; left: 2px; right: 2px; border-radius: 6px; padding: 3px 6px; font-size: 10px; overflow: hidden; border-left: 3px solid rgba(0,0,0,0.15); line-height: 1.3; }
+    .block span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .b-green { background: #bbf7d0; }
+    .b-pink { background: #fbcfe8; }
+    .b-yellow { background: #fef08a; }
+    .b-blue { background: #bae6fd; }
+    .b-purple { background: #e9d5ff; }
+    .b-gray { background: #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="nav-left">
+      <button>今天</button>
+      <button>‹</button>
+      <button>›</button>
+    </div>
+    <div class="nav-center">2025年11月17日 - 23日</div>
+    <div class="nav-tabs">
+      <span>日</span>
+      <span class="active">周</span>
+      <span>月</span>
+    </div>
+  </div>
+
+  <div class="grid-wrap">
+    <table class="cal-table">
+      <thead>
+        <tr>
+          <th class="time-cell">GMT+8</th>
+          <th class="day-header"><span class="w">周一</span><span class="d">17</span></th>
+          <th class="day-header"><span class="w">周二</span><span class="d">18</span></th>
+          <th class="day-header"><span class="w">周三</span><span class="d">19</span></th>
+          <th class="day-header"><span class="w">周四</span><span class="d">20</span></th>
+          <th class="day-header"><span class="w">周五</span><span class="d">21</span></th>
+          <th class="day-header"><span class="w">周六</span><span class="d">22</span></th>
+          <th class="day-header"><span class="w">周日</span><span class="d">23</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="time-cell">08:00</td><td class="slot-cell" rowspan="3" style="position:relative;"><div class="block b-green" style="top:10px;height:74px;"><span>上课 08:45-11:15</span></div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">09:00</td><td class="slot-cell" style="position:relative;"><div class="block b-pink" style="top:4px;height:20px;"><span>冲浪 09:10-09:40</span></div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">10:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">11:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">12:00</td><td class="slot-cell"></td><td class="slot-cell" rowspan="2" style="position:relative;"><div class="block b-green" style="top:2px;height:52px;"><span>作业 12:00-13:00</span></div></td><td class="slot-cell" rowspan="2" style="position:relative;"><div class="block b-pink" style="top:14px;height:50px;"><span>吃饭+冲浪+整理 12:29-13:44</span></div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">13:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">14:00</td><td class="slot-cell"></td><td class="slot-cell" style="position:relative;"><div class="block b-yellow" style="top:2px;height:22px;"><span>nap 14:00-14:45</span></div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">15:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell" rowspan="2" style="position:relative;"><div class="block b-blue" style="top:2px;height:52px;"><span>健身 15:00-16:00</span></div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">16:00</td><td class="slot-cell"></td><td class="slot-cell" rowspan="2" style="position:relative;"><div class="block b-purple" style="top:2px;height:74px;"><span>家教 16:00-17:30</span></div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">17:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">18:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">19:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">20:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">21:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+        <tr><td class="time-cell">22:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-size: 11px; color: #94a3b8; margin-top: 12px;">周历网格：左侧时间轴(8:00-22:00)，横轴 7 天。块高度=时长，块与块不重叠。</p>
+</body>
+</html>

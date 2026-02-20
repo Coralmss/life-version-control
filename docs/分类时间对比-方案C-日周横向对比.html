@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分类时间对比 - 方案 C：日/周横向对比</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; font-size: 14px; padding: 20px; }
+    .app { max-width: 560px; margin: 0 auto; }
+    h2 { font-size: 1rem; color: #0f172a; margin: 0 0 8px; }
+    .sub { font-size: 0.75rem; color: #94a3b8; margin-bottom: 20px; }
+
+    /* 日视图：横向柱状图，各分类横向排列 */
+    .day-h-bar { padding: 12px 16px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px; }
+    .day-h-bar .row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .day-h-bar .row:last-child { margin-bottom: 0; }
+    .day-h-bar .label { font-size: 0.75rem; color: #64748b; min-width: 72px; }
+    .day-h-bar .bar-wrap { flex: 1; height: 24px; background: #f1f5f9; border-radius: 6px; overflow: hidden; display: flex; }
+    .day-h-bar .bar-seg { height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 11px; font-weight: 500; }
+    .day-h-bar .bar-seg.deep { background: #a7f3d0; }
+    .day-h-bar .bar-seg.shallow { background: #fde68a; }
+    .day-h-bar .bar-seg.rest { background: #bae6fd; }
+    .day-h-bar .bar-seg.fish { background: #e2e8f0; }
+    .day-h-bar .bar-seg.unset { background: #f1f5f9; color: #94a3b8; }
+
+    /* 周视图：7 根堆叠柱 */
+    .week-wrap { padding: 16px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .week-chart-title { font-size: 0.85rem; color: #64748b; margin-bottom: 12px; }
+    .week-bars { display: flex; align-items: flex-end; gap: 6px; min-height: 100px; }
+    .week-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+    .week-bar { width: 100%; max-width: 40px; height: 90px; display: flex; flex-direction: column-reverse; border-radius: 4px; overflow: hidden; }
+    .week-seg { padding: 1px 2px; font-size: 8px; font-weight: 600; color: #0f172a; text-align: center; min-height: 14px; }
+    .week-seg.deep { background: #a7f3d0; }
+    .week-seg.shallow { background: #fde68a; }
+    .week-seg.rest { background: #bae6fd; }
+    .week-seg.fish { background: #e2e8f0; }
+    .week-seg.unset { background: #f1f5f9; color: #94a3b8; }
+    .week-date { font-size: 0.6rem; color: #64748b; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h2>方案 C：日视图 - 横向分类条</h2>
+    <p class="sub">日视图用横向条展示各分类占比，周视图用堆叠柱</p>
+
+    <div class="day-h-bar">
+      <div class="day-h-bar-title" style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">今日时间花费</div>
+      <div class="row">
+        <span class="label">深度工作</span>
+        <div class="bar-wrap" style="max-width: 200px;">
+          <div class="bar-seg deep" style="width: 52%;">2.5h</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="label">浅层处理</span>
+        <div class="bar-wrap" style="max-width: 200px;">
+          <div class="bar-seg shallow" style="width: 27%;">1.3h</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="label">休息放松</span>
+        <div class="bar-wrap" style="max-width: 200px;">
+          <div class="bar-seg rest" style="width: 21%;">1h</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="label">未设置</span>
+        <div class="bar-wrap" style="max-width: 200px;">
+          <div class="bar-seg unset" style="width: 100%;">19.2h</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="week-wrap" style="margin-top: 24px;">
+      <h2 style="margin-bottom: 8px;">方案 C：周视图</h2>
+      <p class="sub" style="margin-bottom: 12px;">与方案 B 相同的 7 根堆叠柱</p>
+      <div class="week-chart-title">本周时间花费</div>
+      <div class="week-bars">
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 1.2;">4.3</div>
+            <div class="week-seg deep" style="flex: 2.5;">2.5</div>
+            <div class="week-seg shallow" style="flex: 1.3;">1.3</div>
+            <div class="week-seg rest" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/17</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 2;">6</div>
+            <div class="week-seg deep" style="flex: 3;">3</div>
+            <div class="week-seg rest" style="flex: 2;">2</div>
+          </div>
+          <div class="week-date">11/18</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 3;">9</div>
+            <div class="week-seg shallow" style="flex: 2;">2</div>
+            <div class="week-seg rest" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/19</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 2.5;">7.5</div>
+            <div class="week-seg deep" style="flex: 2;">2</div>
+            <div class="week-seg rest" style="flex: 1.5;">1.5</div>
+          </div>
+          <div class="week-date">11/20</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 4;">12</div>
+            <div class="week-seg deep" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/21</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 2;">6</div>
+            <div class="week-seg rest" style="flex: 3;">3</div>
+            <div class="week-seg shallow" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/22</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 3;">9</div>
+            <div class="week-seg deep" style="flex: 2;">2</div>
+            <div class="week-seg rest" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/23</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

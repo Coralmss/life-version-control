@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时间轴可视化方案对比</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: #f8fafc; }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    .subtitle { color: #64748b; font-size: 0.875rem; margin-bottom: 24px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    .tab { padding: 10px 20px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; cursor: pointer; font-size: 0.9rem; }
+    .tab:hover { background: #f1f5f9; }
+    .tab.active { background: #0f766e; color: white; border-color: #0f766e; }
+    .panel { display: none; background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .panel.active { display: block; }
+    .scheme-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+    .scheme-desc { color: #64748b; font-size: 0.875rem; margin-bottom: 20px; }
+    .mockup { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; min-height: 400px; }
+    .mockup-inner { padding: 20px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 0.8rem; }
+    .cal-day.empty { color: #cbd5e1; }
+    .cal-day.has-data { background: #ccfbf1; color: #0f766e; font-weight: 500; }
+    .cal-day.today { border: 2px solid #0f766e; }
+    .timeline-bar { height: 24px; border-radius: 6px; margin-bottom: 8px; display: flex; align-items: center; padding: 0 10px; font-size: 0.8rem; }
+    .timeline-bar.deep { background: #a7f3d0; }
+    .timeline-bar.shallow { background: #fde68a; }
+    .timeline-bar.rest { background: #bae6fd; }
+    .timeline-bar.fish { background: #e2e8f0; }
+    .pie-container { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+    .pie-demo { width: 160px; height: 160px; border-radius: 50%; background: conic-gradient(#a7f3d0 0deg 144deg, #fde68a 144deg 252deg, #bae6fd 252deg 324deg, #e2e8f0 324deg 360deg); }
+    .pie-legend { display: flex; flex-direction: column; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 4px; }
+    .date-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .date-nav button { padding: 8px 16px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; cursor: pointer; }
+    .date-nav span { font-weight: 500; min-width: 120px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>时间轴可视化方案对比</h1>
+  <p class="subtitle">请浏览以下方案，选择你偏好的呈现方式（可多选或提出修改意见）</p>
+
+  <div class="tabs">
+    <div class="tab active" data-panel="a">方案 A：日历式</div>
+    <div class="tab" data-panel="b">方案 B：时间轴 + 饼图</div>
+    <div class="tab" data-panel="c">方案 C：周视图</div>
+    <div class="tab" data-panel="d">方案 D：时间块式</div>
+  </div>
+
+  <!-- 方案 A：日历式 -->
+  <div id="panel-a" class="panel active">
+    <div class="scheme-title">方案 A：日历式</div>
+    <div class="scheme-desc">以月历形式呈现，每个格子代表一天。有记录的日期高亮，点击可查看该天的详细时间轴和饼图。</div>
+    <div class="mockup">
+      <div class="mockup-inner">
+        <div class="date-nav">
+          <button>← 上月</button>
+          <span>2025 年 2 月</span>
+          <button>下月 →</button>
+        </div>
+        <div class="calendar-grid">
+          <div class="cal-day empty">日</div><div class="cal-day empty">一</div><div class="cal-day empty">二</div><div class="cal-day empty">三</div><div class="cal-day empty">四</div><div class="cal-day empty">五</div><div class="cal-day empty">六</div>
+          <div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty">1</div>
+          <div class="cal-day empty">2</div><div class="cal-day empty">3</div><div class="cal-day has-data">4</div><div class="cal-day has-data">5</div><div class="cal-day has-data">6</div><div class="cal-day empty">7</div><div class="cal-day empty">8</div>
+          <div class="cal-day empty">9</div><div class="cal-day has-data">10</div><div class="cal-day has-data">11</div><div class="cal-day empty">12</div><div class="cal-day empty">13</div><div class="cal-day empty">14</div><div class="cal-day empty">15</div>
+          <div class="cal-day empty">16</div><div class="cal-day empty">17</div><div class="cal-day has-data">18</div><div class="cal-day has-data today">19</div><div class="cal-day empty">20</div><div class="cal-day empty">21</div><div class="cal-day empty">22</div>
+          <div class="cal-day empty">23</div><div class="cal-day empty">24</div><div class="cal-day empty">25</div><div class="cal-day empty">26</div><div class="cal-day empty">27</div><div class="cal-day empty">28</div>
+        </div>
+        <p style="margin-top: 16px; font-size: 0.8rem; color: #64748b;">↓ 点击某天后，下方展开该天的详细时间轴和饼图</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 B：时间轴 + 饼图 -->
+  <div id="panel-b" class="panel">
+    <div class="scheme-title">方案 B：时间轴 + 饼图</div>
+    <div class="scheme-desc">顶部日期选择器，左侧为当天完整时间轴（按时间顺序排列），右侧为饼图展示各分类占比。</div>
+    <div class="mockup">
+      <div class="mockup-inner">
+        <div class="date-nav">
+          <button>← 前一天</button>
+          <span>2025-02-19 周三</span>
+          <button>后一天 →</button>
+        </div>
+        <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 12px;">今日时间轴</p>
+            <div class="timeline-bar deep">09:00-10:30 写周报 · 深度工作</div>
+            <div class="timeline-bar shallow">10:30-11:00 回复邮件 · 浅层处理</div>
+            <div class="timeline-bar rest">11:00-11:20 休息 · 休息放松</div>
+            <div class="timeline-bar deep">14:00-16:00 学习 React · 深度工作</div>
+            <div class="timeline-bar fish">16:30-17:00 刷手机 · 无意识摸鱼</div>
+          </div>
+          <div>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 12px;">今日占比</p>
+            <div class="pie-container">
+              <div class="pie-demo"></div>
+              <div class="pie-legend">
+                <div class="legend-item"><span class="legend-dot" style="background:#a7f3d0"></span>深度工作 40%</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#fde68a"></span>浅层处理 30%</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#bae6fd"></span>休息放松 20%</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#e2e8f0"></span>无意识摸鱼 10%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 C：周视图 -->
+  <div id="panel-c" class="panel">
+    <div class="scheme-title">方案 C：周视图</div>
+    <div class="scheme-desc">按周切换，展示本周 7 天的饼图对比，或选中某天查看该天详情。颗粒度以天为单位。</div>
+    <div class="mockup">
+      <div class="mockup-inner">
+        <div class="date-nav">
+          <button>← 上周</button>
+          <span>2025-02-17 ~ 02-23</span>
+          <button>下周 →</button>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px;">
+          <div style="text-align: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <div style="font-size: 0.75rem; color: #64748b;">周一 17</div>
+            <div style="width: 48px; height: 48px; margin: 8px auto; border-radius: 50%; background: conic-gradient(#a7f3d0 0deg 180deg, #fde68a 180deg 360deg);"></div>
+            <div style="font-size: 0.7rem;">2.5h</div>
+          </div>
+          <div style="text-align: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <div style="font-size: 0.75rem; color: #64748b;">周二 18</div>
+            <div style="width: 48px; height: 48px; margin: 8px auto; border-radius: 50%; background: conic-gradient(#a7f3d0 0deg 120deg, #bae6fd 120deg 240deg, #e2e8f0 240deg 360deg);"></div>
+            <div style="font-size: 0.7rem;">3.2h</div>
+          </div>
+          <div style="text-align: center; padding: 12px; border: 2px solid #0f766e; border-radius: 12px; background: #f0fdfa;">
+            <div style="font-size: 0.75rem; color: #0f766e; font-weight: 500;">周三 19 今天</div>
+            <div style="width: 48px; height: 48px; margin: 8px auto; border-radius: 50%; background: conic-gradient(#a7f3d0 0deg 144deg, #fde68a 144deg 252deg, #bae6fd 252deg 324deg, #e2e8f0 324deg 360deg);"></div>
+            <div style="font-size: 0.7rem;">4.1h</div>
+          </div>
+          <div style="text-align: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; opacity: 0.5;">
+            <div style="font-size: 0.75rem; color: #64748b;">周四 20</div>
+            <div style="width: 48px; height: 48px; margin: 8px auto; border-radius: 50%; background: #f1f5f9;"></div>
+            <div style="font-size: 0.7rem;">-</div>
+          </div>
+          <div style="text-align: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; opacity: 0.5;">
+            <div style="font-size: 0.75rem; color: #64748b;">周五 21</div>
+            <div style="width: 48px; height: 48px; margin: 8px auto; border-radius: 50%; background: #f1f5f9;"></div>
+            <div style="font-size: 0.7rem;">-</div>
+          </div>
+          <div style="text-align: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; opacity: 0.5;">
+            <div style="font-size: 0.75rem; color: #64748b;">周六 22</div>
+            <div style="width: 48px; height: 48px; margin: 8px auto; border-radius: 50%; background: #f1f5f9;"></div>
+            <div style="font-size: 0.7rem;">-</div>
+          </div>
+          <div style="text-align: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; opacity: 0.5;">
+            <div style="font-size: 0.75rem; color: #64748b;">周日 23</div>
+            <div style="width: 48px; height: 48px; margin: 8px auto; border-radius: 50%; background: #f1f5f9;"></div>
+            <div style="font-size: 0.7rem;">-</div>
+          </div>
+        </div>
+        <p style="margin-top: 16px; font-size: 0.8rem; color: #64748b;">点击某天可展开该天的详细时间轴</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 D：时间块式 -->
+  <div id="panel-d" class="panel">
+    <div class="scheme-title">方案 D：时间块式（日程表风格）</div>
+    <div class="scheme-desc">类似 Google 日历，左侧为 24 小时时间轴，右侧为当天各任务按起止时间排列的色块。直观看到时间分布和空隙。</div>
+    <div class="mockup">
+      <div class="mockup-inner">
+        <div class="date-nav">
+          <button>←</button>
+          <span>2025-02-19</span>
+          <button>→</button>
+        </div>
+        <div style="display: flex; gap: 0; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="width: 48px; padding: 8px 0; background: #f8fafc; font-size: 0.7rem; color: #64748b; text-align: right;">
+            <div style="height: 40px;">9:00</div>
+            <div style="height: 40px;">10:00</div>
+            <div style="height: 40px;">11:00</div>
+            <div style="height: 40px;">12:00</div>
+            <div style="height: 40px;">14:00</div>
+            <div style="height: 40px;">15:00</div>
+            <div style="height: 40px;">16:00</div>
+            <div style="height: 40px;">17:00</div>
+          </div>
+          <div style="flex: 1; position: relative; min-height: 320px;">
+            <div style="position: absolute; left: 0; right: 0; top: 0; height: 25%; background: #a7f3d0; border-radius: 6px; margin: 0 8px; padding: 4px 8px; font-size: 0.75rem;">写周报</div>
+            <div style="position: absolute; left: 0; right: 0; top: 25%; height: 8%; background: #fde68a; border-radius: 6px; margin: 0 8px; padding: 4px 8px; font-size: 0.75rem;">回复邮件</div>
+            <div style="position: absolute; left: 0; right: 0; top: 33%; height: 5%; background: #bae6fd; border-radius: 6px; margin: 0 8px; padding: 4px 8px; font-size: 0.75rem;">休息</div>
+            <div style="position: absolute; left: 0; right: 0; top: 50%; height: 33%; background: #a7f3d0; border-radius: 6px; margin: 0 8px; padding: 4px 8px; font-size: 0.75rem;">学习 React</div>
+            <div style="position: absolute; left: 0; right: 0; top: 83%; height: 12%; background: #e2e8f0; border-radius: 6px; margin: 0 8px; padding: 4px 8px; font-size: 0.75rem;">刷手机</div>
+          </div>
+        </div>
+        <p style="margin-top: 12px; font-size: 0.8rem; color: #64748b;">色块长度 = 实际时长，可直观看到时间空隙</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

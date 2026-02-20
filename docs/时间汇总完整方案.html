@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>时间汇总完整方案 - 日/周/月 + 响应式</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; font-size: 14px; }
+    
+    /* 整体容器 - 模拟 App 最大宽度 */
+    .app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: #fff; padding-bottom: 80px; }
+    @media (min-width: 768px) {
+      .app { max-width: 640px; padding-bottom: 24px; }
+    }
+
+    /* 顶部标题 */
+    .page-header { padding: 16px 20px 12px; }
+    .page-header h1 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+    .page-header p { font-size: 0.8rem; color: #64748b; margin: 4px 0 0; }
+
+    /* 顶部 Tab（时间管理/时间汇总）*/
+    .top-tabs { display: none; }
+    @media (min-width: 768px) {
+      .top-tabs { display: flex; gap: 4px; padding: 0 20px 12px; border-bottom: 1px solid #e2e8f0; }
+      .top-tabs span { padding: 8px 16px; font-size: 0.9rem; color: #64748b; cursor: pointer; }
+      .top-tabs span.active { color: #0f766e; font-weight: 600; border-bottom: 2px solid #0f766e; margin-bottom: -1px; }
+    }
+
+    /* 主内容区 */
+    .content { padding: 0 20px 24px; }
+
+    /* 日期选择器 */
+    .date-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .date-nav .arrows { display: flex; gap: 4px; }
+    .date-nav button { padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; cursor: pointer; font-size: 14px; }
+    .date-nav .center { flex: 1; text-align: center; font-weight: 500; font-size: 0.9rem; min-width: 140px; }
+    .date-nav .today-btn { padding: 8px 14px; font-size: 0.8rem; }
+    .date-nav .today-btn.active { background: #ecfdf5; color: #0f766e; border-color: #a7f3d0; }
+
+    /* 日/周/月 切换 */
+    .view-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .view-tabs button { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; font-size: 0.9rem; cursor: pointer; }
+    .view-tabs button.active { background: #0f766e; color: white; border-color: #0f766e; }
+
+    /* 时间占比 - 饼图 */
+    .pie-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; padding: 20px; background: #fafafa; border-radius: 16px; }
+    .pie-section h3 { font-size: 0.85rem; color: #64748b; margin: 0 0 12px; font-weight: 500; }
+    .pie-demo { width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(#a7f3d0 0deg 72deg, #fde68a 72deg 144deg, #bae6fd 144deg 216deg, #e2e8f0 216deg 288deg, #f1f5f9 288deg 360deg); }
+    .pie-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 20px; margin-top: 16px; font-size: 0.8rem; color: #64748b; }
+    .pie-legend span { display: flex; align-items: center; gap: 6px; }
+    .pie-legend .dot { width: 10px; height: 10px; border-radius: 3px; }
+    .pie-summary { font-size: 0.75rem; color: #94a3b8; margin-top: 8px; }
+
+    /* 时间块区域 */
+    .blocks-section { margin-bottom: 24px; }
+    .blocks-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .blocks-header h3 { font-size: 0.85rem; color: #64748b; margin: 0; font-weight: 500; }
+    .add-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; border: 1px solid #0f766e; color: #0f766e; background: white; font-size: 0.85rem; cursor: pointer; }
+    .add-btn:hover { background: #ecfdf5; }
+
+    /* 日视图 - 列表 */
+    .day-list { display: flex; flex-direction: column; gap: 8px; }
+    .day-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f8fafc; border-radius: 12px; }
+    .day-item .time { font-size: 0.75rem; color: #64748b; min-width: 90px; }
+    .day-item .bar { flex: 1; height: 28px; border-radius: 8px; padding: 0 10px; display: flex; align-items: center; font-size: 0.85rem; }
+    .day-item .bar.green { background: #bbf7d0; }
+    .day-item .bar.blue { background: #bae6fd; }
+    .day-item .bar.yellow { background: #fef08a; }
+
+    /* 周视图 - 网格 */
+    .week-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -20px; padding: 0 20px; }
+    .week-table { width: 100%; min-width: 500px; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+    .week-table th, .week-table td { border: 1px solid #e2e8f0; padding: 0; vertical-align: top; }
+    .week-table .time-cell { width: 40px; background: #f8fafc; font-size: 10px; color: #94a3b8; text-align: right; padding: 4px 6px; }
+    .week-table .day-header { padding: 8px; text-align: center; background: #fafafa; font-weight: 500; }
+    .week-table .day-header .w { font-size: 10px; color: #64748b; display: block; }
+    .week-table .day-header .d { font-size: 12px; }
+    .week-table .slot-cell { height: 24px; min-height: 24px; position: relative; }
+    .week-table .slot-cell:nth-child(odd) { background: #fafafa; }
+    .week-block { position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 2px 4px; font-size: 9px; overflow: hidden; border-left: 2px solid rgba(0,0,0,0.15); }
+    .week-block.green { background: #bbf7d0; }
+    .week-block.blue { background: #bae6fd; }
+    .week-block.yellow { background: #fef08a; }
+
+    /* 月视图 - 月历 */
+    .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .month-grid .weekday { text-align: center; font-size: 0.7rem; color: #94a3b8; padding: 8px 0; }
+    .month-grid .day-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 0.85rem; cursor: pointer; }
+    .month-grid .day-cell.empty { color: #cbd5e1; }
+    .month-grid .day-cell.has-data { background: #ecfdf5; color: #0f766e; font-weight: 500; }
+    .month-grid .day-cell.today { border: 2px solid #0f766e; }
+    .month-grid .day-cell .dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; margin-top: 2px; }
+
+    /* 底部 Tab（移动端）*/
+    .bottom-tabs { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; height: 64px; background: white; border-top: 1px solid #e2e8f0; display: flex; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
+    .bottom-tabs .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 0.7rem; color: #64748b; cursor: pointer; }
+    .bottom-tabs .tab.active { color: #0f766e; font-weight: 500; }
+    @media (min-width: 768px) {
+      .bottom-tabs { display: none; }
+    }
+
+    /* 饼图与时间块始终上下排列，不采用左右并排 */
+
+    /* 空状态 */
+    .empty-state { padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 0.85rem; border: 1px dashed #e2e8f0; border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="page-header">
+      <h1>Life Version Control</h1>
+      <p>记录时间，掌控精力</p>
+    </header>
+
+    <nav class="top-tabs">
+      <span>时间管理</span>
+      <span class="active">时间汇总</span>
+    </nav>
+
+    <main class="content">
+      <!-- 日期选择 -->
+      <div class="date-nav">
+        <div class="arrows">
+          <button>‹</button>
+          <button>›</button>
+        </div>
+        <div class="center" id="dateLabel">2025年11月20日 周三</div>
+        <button class="today-btn active">今天</button>
+      </div>
+
+      <!-- 日/周/月 切换 -->
+      <div class="view-tabs">
+        <button class="active" data-view="day">日</button>
+        <button data-view="week">周</button>
+        <button data-view="month">月</button>
+      </div>
+
+      <div class="summary-layout">
+        <!-- 时间占比 -->
+        <section class="pie-section">
+          <h3>时间占比（24h）</h3>
+          <div class="pie-demo"></div>
+          <div class="pie-legend">
+            <span><i class="dot" style="background:#a7f3d0"></i>深度工作 20%</span>
+            <span><i class="dot" style="background:#fde68a"></i>浅层处理 20%</span>
+            <span><i class="dot" style="background:#bae6fd"></i>休息放松 20%</span>
+            <span><i class="dot" style="background:#f1f5f9"></i>未设置 40%</span>
+          </div>
+          <p class="pie-summary">已记录 04:48:00 / 24h</p>
+        </section>
+
+        <!-- 时间块 -->
+        <section class="blocks-section">
+          <div class="blocks-header">
+            <h3>时间块</h3>
+            <button class="add-btn">+ 手动添加</button>
+          </div>
+
+          <!-- 日视图 -->
+          <div id="view-day" class="view-content" style="display:block;">
+            <div class="day-list">
+              <div class="day-item">
+                <span class="time">08:45 - 11:15</span>
+                <div class="bar green">上课 · 深度工作</div>
+              </div>
+              <div class="day-item">
+                <span class="time">12:00 - 13:00</span>
+                <div class="bar blue">休息 · 休息放松</div>
+              </div>
+              <div class="day-item">
+                <span class="time">14:00 - 17:30</span>
+                <div class="bar yellow">学习 · 浅层处理</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 周视图 -->
+          <div id="view-week" class="view-content" style="display:none;">
+            <div class="week-grid-wrap">
+              <table class="week-table">
+                <thead>
+                  <tr>
+                    <th class="time-cell"></th>
+                    <th class="day-header"><span class="w">周一</span><span class="d">17</span></th>
+                    <th class="day-header"><span class="w">周二</span><span class="d">18</span></th>
+                    <th class="day-header"><span class="w">周三</span><span class="d">19</span></th>
+                    <th class="day-header"><span class="w">周四</span><span class="d">20</span></th>
+                    <th class="day-header"><span class="w">周五</span><span class="d">21</span></th>
+                    <th class="day-header"><span class="w">周六</span><span class="d">22</span></th>
+                    <th class="day-header"><span class="w">周日</span><span class="d">23</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="time-cell">08:00</td><td class="slot-cell" rowspan="3" style="position:relative;"><div class="week-block green" style="top:4px;height:68px;">上课 08:45-11:15</div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">09:00</td><td class="slot-cell" style="position:relative;"><div class="week-block blue" style="top:2px;height:18px;">冲浪 09:10-09:40</div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">10:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">12:00</td><td class="slot-cell"></td><td class="slot-cell" rowspan="2" style="position:relative;"><div class="week-block green" style="top:2px;height:46px;">作业 12:00-13:00</div></td><td class="slot-cell" rowspan="2" style="position:relative;"><div class="week-block blue" style="top:12px;height:44px;">吃饭+整理 12:29-13:44</div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">13:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">14:00</td><td class="slot-cell"></td><td class="slot-cell" style="position:relative;"><div class="week-block yellow" style="top:2px;height:20px;">nap 14:00-14:45</div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">15:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell" rowspan="2" style="position:relative;"><div class="week-block blue" style="top:2px;height:46px;">健身 15:00-16:00</div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">16:00</td><td class="slot-cell"></td><td class="slot-cell" rowspan="2" style="position:relative;"><div class="week-block green" style="top:2px;height:68px;">家教 16:00-17:30</div></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">17:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">18:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">19:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                  <tr><td class="time-cell">20:00</td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td><td class="slot-cell"></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 月视图 -->
+          <div id="view-month" class="view-content" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-weight: 500;">2025年11月</span>
+            </div>
+            <div class="month-grid">
+              <div class="weekday">日</div><div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div>
+              <div class="day-cell empty"></div><div class="day-cell empty"></div><div class="day-cell empty"></div><div class="day-cell empty"></div><div class="day-cell empty"></div><div class="day-cell empty"></div><div class="day-cell empty">1</div>
+              <div class="day-cell empty">2</div><div class="day-cell has-data">3</div><div class="day-cell has-data">4</div><div class="day-cell empty">5</div><div class="day-cell empty">6</div><div class="day-cell empty">7</div><div class="day-cell empty">8</div>
+              <div class="day-cell empty">9</div><div class="day-cell has-data">10</div><div class="day-cell has-data">11</div><div class="day-cell empty">12</div><div class="day-cell empty">13</div><div class="day-cell empty">14</div><div class="day-cell empty">15</div>
+              <div class="day-cell empty">16</div><div class="day-cell has-data">17</div><div class="day-cell has-data">18</div><div class="day-cell has-data">19</div><div class="day-cell today has-data">20</div><div class="day-cell empty">21</div><div class="day-cell empty">22</div>
+              <div class="day-cell empty">23</div><div class="day-cell empty">24</div><div class="day-cell empty">25</div><div class="day-cell empty">26</div><div class="day-cell empty">27</div><div class="day-cell empty">28</div><div class="day-cell empty">29</div>
+              <div class="day-cell empty">30</div>
+            </div>
+            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 12px;">点击日期可查看该日详情</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- 移动端底部 Tab -->
+    <nav class="bottom-tabs">
+      <div class="tab">时间管理</div>
+      <div class="tab active">时间汇总</div>
+    </nav>
+  </div>
+
+  <p style="padding: 0 20px 20px; font-size: 0.75rem; color: #94a3b8;">💡 调整浏览器窗口宽度可查看 H5（&lt;768px）与 PC 端布局差异。移动端显示底部 Tab，PC 端显示顶部 Tab；饼图在 PC 端与时间块并排。</p>
+
+  <script>
+    document.querySelectorAll('.view-tabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.view-tabs button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('[id^="view-"]').forEach(v => v.style.display = 'none');
+        btn.classList.add('active');
+        const view = btn.dataset.view;
+        document.getElementById('view-' + view).style.display = 'block';
+        const labels = { day: '2025年11月20日 周三', week: '2025年11月17日 - 23日', month: '2025年11月' };
+        document.getElementById('dateLabel').textContent = labels[view];
+      });
+    });
+  </script>
+</body>
+</html>

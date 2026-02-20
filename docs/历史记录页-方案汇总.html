@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>历史记录页 - 方案汇总</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; }
+
+  .proposals { display: flex; gap: 32px; padding: 32px; flex-wrap: wrap; justify-content: center; }
+  .proposal { width: 375px; flex-shrink: 0; }
+  .proposal-title { text-align: center; font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px; }
+
+  .phone {
+    width: 375px; height: 780px; border-radius: 40px;
+    border: 8px solid #1a1a1a; background: #fff; overflow: hidden;
+    display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  }
+
+  /* Status bar */
+  .status-bar { height: 44px; background: #fff; display: flex; align-items: center; justify-content: center; padding: 0 24px; flex-shrink: 0; }
+  .status-bar span { font-size: 14px; font-weight: 600; }
+
+  /* Tab bar */
+  .tab-bar { display: flex; border-top: 1px solid #e5e5e5; background: #fafafa; flex-shrink: 0; }
+  .tab-bar .tab { flex: 1; text-align: center; padding: 8px 0 20px; font-size: 10px; color: #999; cursor: pointer; }
+  .tab-bar .tab.active { color: #22c55e; }
+  .tab-bar .tab .icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+  /* Content */
+  .content { flex: 1; overflow-y: auto; background: #f8f8f8; }
+
+  /* Date selector */
+  .date-sel { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fff; border-bottom: 1px solid #f0f0f0; }
+  .date-sel .arrow { width: 28px; height: 28px; border-radius: 50%; background: #f5f5f5; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #666; cursor: pointer; }
+  .date-sel .date-text { font-size: 15px; font-weight: 600; }
+  .date-sel .weekday { font-size: 12px; color: #999; margin-left: 6px; }
+
+  /* ── Shared styles ── */
+  .section-title { font-size: 12px; color: #999; padding: 12px 16px 6px; }
+  .summary-strip { display: flex; gap: 8px; padding: 0 16px 12px; }
+  .summary-chip { flex: 1; background: #fff; border-radius: 10px; padding: 10px 12px; text-align: center; }
+  .summary-chip .num { font-size: 18px; font-weight: 700; }
+  .summary-chip .label { font-size: 10px; color: #999; margin-top: 2px; }
+
+  .empty-state { text-align: center; padding: 48px 16px; color: #ccc; }
+  .empty-state .icon { font-size: 40px; margin-bottom: 8px; }
+
+  /* ── Scheme A: Card list ── */
+  .card-list { padding: 0 16px; }
+  .record-card {
+    background: #fff; border-radius: 12px; padding: 12px 14px;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .record-card .color-bar { width: 4px; height: 40px; border-radius: 2px; flex-shrink: 0; }
+  .record-card .info { flex: 1; min-width: 0; }
+  .record-card .task-name { font-size: 14px; font-weight: 500; }
+  .record-card .task-meta { font-size: 11px; color: #999; margin-top: 2px; display: flex; gap: 8px; }
+  .record-card .duration { font-size: 13px; font-weight: 600; color: #333; flex-shrink: 0; }
+  .record-card .actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .record-card .act-btn { width: 28px; height: 28px; border-radius: 6px; border: none; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .record-card .act-edit { background: #f0f7ff; color: #3b82f6; }
+  .record-card .act-del { background: #fff5f5; color: #ef4444; }
+
+  /* ── Scheme B: Timeline ── */
+  .timeline { padding: 0 16px 16px; position: relative; }
+  .timeline::before { content: ''; position: absolute; left: 30px; top: 0; bottom: 0; width: 2px; background: #e5e5e5; }
+  .tl-item { display: flex; gap: 12px; margin-bottom: 12px; position: relative; }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; position: relative; z-index: 1; margin-left: 21px; }
+  .tl-content { flex: 1; background: #fff; border-radius: 10px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .tl-content .tl-time { font-size: 11px; color: #999; }
+  .tl-content .tl-name { font-size: 14px; font-weight: 500; margin-top: 2px; }
+  .tl-content .tl-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .tl-content .tl-cat { font-size: 10px; padding: 2px 8px; border-radius: 10px; }
+  .tl-content .tl-dur { font-size: 12px; font-weight: 600; color: #666; }
+  .tl-actions { display: flex; gap: 4px; }
+  .tl-actions button { background: none; border: none; font-size: 14px; cursor: pointer; padding: 2px; }
+
+  /* ── Scheme C: Compact table ── */
+  .table-wrap { padding: 0 12px; }
+  .rec-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .rec-table th { font-size: 10px; color: #999; font-weight: 500; padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f0; background: #fafafa; }
+  .rec-table td { font-size: 13px; padding: 10px 8px; border-bottom: 1px solid #f5f5f5; }
+  .rec-table tr:last-child td { border-bottom: none; }
+  .rec-table .cat-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .rec-table .table-actions { display: flex; gap: 8px; }
+  .rec-table .table-actions button { background: none; border: none; font-size: 13px; cursor: pointer; }
+
+  /* ── Scheme D: Grouped timeline + stats ── */
+  .stats-row { display: flex; gap: 6px; padding: 0 16px 12px; }
+  .stat-card { flex: 1; background: #fff; border-radius: 10px; padding: 10px 8px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .stat-card .stat-val { font-size: 20px; font-weight: 700; }
+  .stat-card .stat-label { font-size: 9px; color: #999; margin-top: 2px; }
+
+  .group-header { font-size: 11px; font-weight: 600; color: #666; padding: 10px 16px 4px; display: flex; align-items: center; gap: 6px; }
+  .group-header .group-line { flex: 1; height: 1px; background: #e5e5e5; }
+
+  .d-card {
+    margin: 0 16px 6px; background: #fff; border-radius: 10px; padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .d-card .d-color { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .d-card .d-info { flex: 1; }
+  .d-card .d-name { font-size: 14px; font-weight: 500; }
+  .d-card .d-time { font-size: 11px; color: #999; }
+  .d-card .d-dur { font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .d-card .d-more { font-size: 18px; color: #ccc; cursor: pointer; margin-left: 4px; }
+
+  /* Colors */
+  .c-work { background: #FEF3C7; }
+  .c-study { background: #D1FAE5; }
+  .c-rest { background: #DBEAFE; }
+  .c-exercise { background: #FCE7F3; }
+  .c-social { background: #F3E8FF; }
+  .c-life { background: #FFF7ED; }
+
+  .bc-work { background: #F59E0B; }
+  .bc-study { background: #10B981; }
+  .bc-rest { background: #3B82F6; }
+  .bc-exercise { background: #EC4899; }
+  .bc-social { background: #8B5CF6; }
+  .bc-life { background: #F97316; }
+
+  .fab { position: absolute; bottom: 70px; right: 16px; width: 48px; height: 48px; border-radius: 50%; background: #22c55e; color: #fff; border: none; font-size: 24px; box-shadow: 0 4px 12px rgba(34,197,94,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+
+<div class="proposals">
+
+<!-- ═══════════════ 方案 A：卡片列表 ═══════════════ -->
+<div class="proposal">
+  <div class="proposal-title">方案 A：卡片列表</div>
+  <div class="phone">
+    <div class="status-bar"><span>个人生命版本管理</span></div>
+
+    <div class="content" style="position:relative;">
+      <div class="date-sel">
+        <div class="arrow">‹</div>
+        <div><span class="date-text">2月20日</span><span class="weekday">周五</span></div>
+        <div class="arrow">›</div>
+      </div>
+
+      <div class="summary-strip" style="margin-top:10px;">
+        <div class="summary-chip"><div class="num" style="color:#22c55e;">6</div><div class="label">任务数</div></div>
+        <div class="summary-chip"><div class="num" style="color:#3b82f6;">3h42m</div><div class="label">总时长</div></div>
+        <div class="summary-chip"><div class="num" style="color:#f59e0b;">37m</div><div class="label">平均</div></div>
+      </div>
+
+      <div class="section-title">今日记录</div>
+      <div class="card-list">
+        <div class="record-card">
+          <div class="color-bar bc-work"></div>
+          <div class="info">
+            <div class="task-name">试用电脑</div>
+            <div class="task-meta"><span>⏱ 17:22 - 17:52</span><span>🏷 工作</span></div>
+          </div>
+          <div class="duration">30min</div>
+          <div class="actions">
+            <button class="act-btn act-edit">✎</button>
+            <button class="act-btn act-del">✕</button>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="color-bar bc-study"></div>
+          <div class="info">
+            <div class="task-name">学习 React</div>
+            <div class="task-meta"><span>⏱ 14:00 - 15:30</span><span>🏷 学习</span></div>
+          </div>
+          <div class="duration">1h30m</div>
+          <div class="actions">
+            <button class="act-btn act-edit">✎</button>
+            <button class="act-btn act-del">✕</button>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="color-bar bc-rest"></div>
+          <div class="info">
+            <div class="task-name">午休</div>
+            <div class="task-meta"><span>⏱ 12:30 - 13:30</span><span>🏷 休息</span></div>
+          </div>
+          <div class="duration">1h</div>
+          <div class="actions">
+            <button class="act-btn act-edit">✎</button>
+            <button class="act-btn act-del">✕</button>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="color-bar bc-exercise"></div>
+          <div class="info">
+            <div class="task-name">跑步</div>
+            <div class="task-meta"><span>⏱ 08:00 - 08:30</span><span>🏷 运动</span></div>
+          </div>
+          <div class="duration">30min</div>
+          <div class="actions">
+            <button class="act-btn act-edit">✎</button>
+            <button class="act-btn act-del">✕</button>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="color-bar bc-social"></div>
+          <div class="info">
+            <div class="task-name">团队会议</div>
+            <div class="task-meta"><span>⏱ 10:00 - 10:30</span><span>🏷 社交</span></div>
+          </div>
+          <div class="duration">30min</div>
+          <div class="actions">
+            <button class="act-btn act-edit">✎</button>
+            <button class="act-btn act-del">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="fab">＋</button>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab"><span class="icon">⏱</span>时间管理</div>
+      <div class="tab active"><span class="icon">📋</span>历史记录</div>
+      <div class="tab"><span class="icon">📊</span>时间汇总</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 方案 B：时间线 ═══════════════ -->
+<div class="proposal">
+  <div class="proposal-title">方案 B：时间线</div>
+  <div class="phone">
+    <div class="status-bar"><span>个人生命版本管理</span></div>
+
+    <div class="content">
+      <div class="date-sel">
+        <div class="arrow">‹</div>
+        <div><span class="date-text">2月20日</span><span class="weekday">周五</span></div>
+        <div class="arrow">›</div>
+      </div>
+
+      <div class="summary-strip" style="margin-top:10px;">
+        <div class="summary-chip"><div class="num" style="color:#22c55e;">6</div><div class="label">任务数</div></div>
+        <div class="summary-chip"><div class="num" style="color:#3b82f6;">3h42m</div><div class="label">总时长</div></div>
+      </div>
+
+      <div class="section-title">时间线</div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot bc-exercise"></div>
+          <div class="tl-content">
+            <div class="tl-time">08:00 - 08:30</div>
+            <div class="tl-name">跑步</div>
+            <div class="tl-bottom">
+              <span class="tl-cat c-exercise" style="color:#EC4899;">运动</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="tl-dur">30min</span>
+                <div class="tl-actions"><button>✎</button><button style="color:#ef4444;">🗑</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot bc-social"></div>
+          <div class="tl-content">
+            <div class="tl-time">10:00 - 10:30</div>
+            <div class="tl-name">团队会议</div>
+            <div class="tl-bottom">
+              <span class="tl-cat c-social" style="color:#8B5CF6;">社交</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="tl-dur">30min</span>
+                <div class="tl-actions"><button>✎</button><button style="color:#ef4444;">🗑</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot bc-rest"></div>
+          <div class="tl-content">
+            <div class="tl-time">12:30 - 13:30</div>
+            <div class="tl-name">午休</div>
+            <div class="tl-bottom">
+              <span class="tl-cat c-rest" style="color:#3B82F6;">休息</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="tl-dur">1h</span>
+                <div class="tl-actions"><button>✎</button><button style="color:#ef4444;">🗑</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot bc-study"></div>
+          <div class="tl-content">
+            <div class="tl-time">14:00 - 15:30</div>
+            <div class="tl-name">学习 React</div>
+            <div class="tl-bottom">
+              <span class="tl-cat c-study" style="color:#10B981;">学习</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="tl-dur">1h30m</span>
+                <div class="tl-actions"><button>✎</button><button style="color:#ef4444;">🗑</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot bc-work"></div>
+          <div class="tl-content">
+            <div class="tl-time">17:22 - 17:52</div>
+            <div class="tl-name">试用电脑</div>
+            <div class="tl-bottom">
+              <span class="tl-cat c-work" style="color:#F59E0B;">工作</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="tl-dur">30min</span>
+                <div class="tl-actions"><button>✎</button><button style="color:#ef4444;">🗑</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot bc-life"></div>
+          <div class="tl-content">
+            <div class="tl-time">19:00 - 19:12</div>
+            <div class="tl-name">做饭</div>
+            <div class="tl-bottom">
+              <span class="tl-cat c-life" style="color:#F97316;">生活</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="tl-dur">12min</span>
+                <div class="tl-actions"><button>✎</button><button style="color:#ef4444;">🗑</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab"><span class="icon">⏱</span>时间管理</div>
+      <div class="tab active"><span class="icon">📋</span>历史记录</div>
+      <div class="tab"><span class="icon">📊</span>时间汇总</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 方案 C：紧凑表格 ═══════════════ -->
+<div class="proposal">
+  <div class="proposal-title">方案 C：紧凑表格</div>
+  <div class="phone">
+    <div class="status-bar"><span>个人生命版本管理</span></div>
+
+    <div class="content" style="position:relative;">
+      <div class="date-sel">
+        <div class="arrow">‹</div>
+        <div><span class="date-text">2月20日</span><span class="weekday">周五</span></div>
+        <div class="arrow">›</div>
+      </div>
+
+      <div class="summary-strip" style="margin-top:10px;">
+        <div class="summary-chip"><div class="num" style="color:#22c55e;">6</div><div class="label">任务数</div></div>
+        <div class="summary-chip"><div class="num" style="color:#3b82f6;">3h42m</div><div class="label">总时长</div></div>
+        <div class="summary-chip"><div class="num" style="color:#f59e0b;">37m</div><div class="label">平均</div></div>
+      </div>
+
+      <div class="section-title">全部记录</div>
+      <div class="table-wrap">
+        <table class="rec-table">
+          <thead>
+            <tr>
+              <th>任务</th>
+              <th>时间</th>
+              <th>时长</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="cat-dot bc-exercise"></span>跑步</td>
+              <td style="font-size:11px;color:#666;">08:00-08:30</td>
+              <td style="font-weight:600;">30m</td>
+              <td><div class="table-actions"><button>✎</button><button style="color:#ef4444;">✕</button></div></td>
+            </tr>
+            <tr>
+              <td><span class="cat-dot bc-social"></span>团队会议</td>
+              <td style="font-size:11px;color:#666;">10:00-10:30</td>
+              <td style="font-weight:600;">30m</td>
+              <td><div class="table-actions"><button>✎</button><button style="color:#ef4444;">✕</button></div></td>
+            </tr>
+            <tr>
+              <td><span class="cat-dot bc-rest"></span>午休</td>
+              <td style="font-size:11px;color:#666;">12:30-13:30</td>
+              <td style="font-weight:600;">1h</td>
+              <td><div class="table-actions"><button>✎</button><button style="color:#ef4444;">✕</button></div></td>
+            </tr>
+            <tr>
+              <td><span class="cat-dot bc-study"></span>学习 React</td>
+              <td style="font-size:11px;color:#666;">14:00-15:30</td>
+              <td style="font-weight:600;">1h30m</td>
+              <td><div class="table-actions"><button>✎</button><button style="color:#ef4444;">✕</button></div></td>
+            </tr>
+            <tr>
+              <td><span class="cat-dot bc-work"></span>试用电脑</td>
+              <td style="font-size:11px;color:#666;">17:22-17:52</td>
+              <td style="font-weight:600;">30m</td>
+              <td><div class="table-actions"><button>✎</button><button style="color:#ef4444;">✕</button></div></td>
+            </tr>
+            <tr>
+              <td><span class="cat-dot bc-life"></span>做饭</td>
+              <td style="font-size:11px;color:#666;">19:00-19:12</td>
+              <td style="font-weight:600;">12m</td>
+              <td><div class="table-actions"><button>✎</button><button style="color:#ef4444;">✕</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <button class="fab">＋</button>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab"><span class="icon">⏱</span>时间管理</div>
+      <div class="tab active"><span class="icon">📋</span>历史记录</div>
+      <div class="tab"><span class="icon">📊</span>时间汇总</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 方案 D：分组卡片 + 顶部统计 ═══════════════ -->
+<div class="proposal">
+  <div class="proposal-title">方案 D：分组卡片 + 顶部统计</div>
+  <div class="phone">
+    <div class="status-bar"><span>个人生命版本管理</span></div>
+
+    <div class="content" style="position:relative;">
+      <div class="date-sel">
+        <div class="arrow">‹</div>
+        <div><span class="date-text">2月20日</span><span class="weekday">周五</span></div>
+        <div class="arrow">›</div>
+      </div>
+
+      <div class="stats-row" style="margin-top:10px;">
+        <div class="stat-card">
+          <div class="stat-val" style="color:#22c55e;">6</div>
+          <div class="stat-label">任务数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:#3b82f6;">3:42</div>
+          <div class="stat-label">总时长</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:#f59e0b;">4</div>
+          <div class="stat-label">分类</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:#8b5cf6;">1:30</div>
+          <div class="stat-label">最长任务</div>
+        </div>
+      </div>
+
+      <div class="group-header"><span>🌅 上午</span><div class="group-line"></div></div>
+      <div class="d-card">
+        <div class="d-color c-exercise">🏃</div>
+        <div class="d-info">
+          <div class="d-name">跑步</div>
+          <div class="d-time">08:00 - 08:30 · 运动</div>
+        </div>
+        <div class="d-dur">30min</div>
+        <div class="d-more">⋯</div>
+      </div>
+      <div class="d-card">
+        <div class="d-color c-social">👥</div>
+        <div class="d-info">
+          <div class="d-name">团队会议</div>
+          <div class="d-time">10:00 - 10:30 · 社交</div>
+        </div>
+        <div class="d-dur">30min</div>
+        <div class="d-more">⋯</div>
+      </div>
+
+      <div class="group-header"><span>☀️ 下午</span><div class="group-line"></div></div>
+      <div class="d-card">
+        <div class="d-color c-rest">😴</div>
+        <div class="d-info">
+          <div class="d-name">午休</div>
+          <div class="d-time">12:30 - 13:30 · 休息</div>
+        </div>
+        <div class="d-dur">1h</div>
+        <div class="d-more">⋯</div>
+      </div>
+      <div class="d-card">
+        <div class="d-color c-study">📖</div>
+        <div class="d-info">
+          <div class="d-name">学习 React</div>
+          <div class="d-time">14:00 - 15:30 · 学习</div>
+        </div>
+        <div class="d-dur">1h30m</div>
+        <div class="d-more">⋯</div>
+      </div>
+
+      <div class="group-header"><span>🌆 晚上</span><div class="group-line"></div></div>
+      <div class="d-card">
+        <div class="d-color c-work">💻</div>
+        <div class="d-info">
+          <div class="d-name">试用电脑</div>
+          <div class="d-time">17:22 - 17:52 · 工作</div>
+        </div>
+        <div class="d-dur">30min</div>
+        <div class="d-more">⋯</div>
+      </div>
+      <div class="d-card">
+        <div class="d-color c-life">🍳</div>
+        <div class="d-info">
+          <div class="d-name">做饭</div>
+          <div class="d-time">19:00 - 19:12 · 生活</div>
+        </div>
+        <div class="d-dur">12min</div>
+        <div class="d-more">⋯</div>
+      </div>
+
+      <div style="height:60px;"></div>
+      <button class="fab">＋</button>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab"><span class="icon">⏱</span>时间管理</div>
+      <div class="tab active"><span class="icon">📋</span>历史记录</div>
+      <div class="tab"><span class="icon">📊</span>时间汇总</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════════════ 方案对比说明 ═══════════════ -->
+<div style="max-width:900px; margin:0 auto 48px; padding:0 32px;">
+  <h2 style="font-size:18px; font-weight:600; margin-bottom:16px; color:#333;">方案对比</h2>
+  <table style="width:100%; border-collapse:collapse; font-size:13px;">
+    <thead>
+      <tr style="background:#f8f8f8;">
+        <th style="padding:10px 12px; text-align:left; border-bottom:2px solid #e5e5e5;">特性</th>
+        <th style="padding:10px 12px; text-align:center; border-bottom:2px solid #e5e5e5;">A 卡片列表</th>
+        <th style="padding:10px 12px; text-align:center; border-bottom:2px solid #e5e5e5;">B 时间线</th>
+        <th style="padding:10px 12px; text-align:center; border-bottom:2px solid #e5e5e5;">C 紧凑表格</th>
+        <th style="padding:10px 12px; text-align:center; border-bottom:2px solid #e5e5e5;">D 分组卡片</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:8px 12px; border-bottom:1px solid #f0f0f0;">信息密度</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">中</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">低</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">高</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">中</td></tr>
+      <tr><td style="padding:8px 12px; border-bottom:1px solid #f0f0f0;">时间感知</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐⭐</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐⭐</td></tr>
+      <tr><td style="padding:8px 12px; border-bottom:1px solid #f0f0f0;">操作便捷</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐⭐</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐⭐</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐</td></tr>
+      <tr><td style="padding:8px 12px; border-bottom:1px solid #f0f0f0;">视觉美感</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐⭐</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">⭐⭐⭐</td></tr>
+      <tr><td style="padding:8px 12px; border-bottom:1px solid #f0f0f0;">分类展示</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">色条</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">圆点+标签</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">圆点</td><td style="text-align:center; border-bottom:1px solid #f0f0f0;">图标+颜色块</td></tr>
+      <tr><td style="padding:8px 12px;">适合场景</td><td style="text-align:center;">日常快速查看</td><td style="text-align:center;">感受时间流动</td><td style="text-align:center;">大量数据管理</td><td style="text-align:center;">结构化回顾</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

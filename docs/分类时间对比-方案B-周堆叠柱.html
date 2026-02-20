@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分类时间对比 - 方案 B：周视图堆叠柱</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; font-size: 14px; padding: 20px; }
+    .app { max-width: 560px; margin: 0 auto; }
+    h2 { font-size: 1rem; color: #0f172a; margin: 0 0 8px; }
+    .sub { font-size: 0.75rem; color: #94a3b8; margin-bottom: 20px; }
+
+    /* 周视图：7 根堆叠柱，类似附件图 */
+    .week-chart-wrap { padding: 20px; background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; }
+    .week-chart-title { font-size: 0.85rem; color: #64748b; margin-bottom: 16px; font-weight: 500; }
+    .week-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 16px; font-size: 0.7rem; color: #64748b; }
+    .week-legend span { display: flex; align-items: center; gap: 4px; }
+    .week-legend .dot { width: 8px; height: 8px; border-radius: 2px; }
+
+    .week-bars { display: flex; align-items: flex-end; gap: 8px; min-height: 140px; }
+    .week-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+    .week-bar { width: 100%; max-width: 48px; height: 120px; display: flex; flex-direction: column-reverse; border-radius: 6px; overflow: hidden; }
+    .week-seg { padding: 2px 4px; font-size: 9px; font-weight: 600; color: #0f172a; text-align: center; min-height: 18px; display: flex; align-items: center; justify-content: center; }
+    .week-seg.deep { background: #a7f3d0; }
+    .week-seg.shallow { background: #fde68a; }
+    .week-seg.rest { background: #bae6fd; }
+    .week-seg.fish { background: #e2e8f0; }
+    .week-seg.unset { background: #f1f5f9; color: #94a3b8; }
+    .week-date { font-size: 0.65rem; color: #64748b; margin-top: 6px; transform: rotate(-15deg); white-space: nowrap; }
+    .week-total { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h2>方案 B：周视图 - 堆叠柱状图</h2>
+    <p class="sub">每天一根柱，各分类按小时堆叠，柱高 = 占当天总记录时间的比例，段内显示小时数</p>
+
+    <div class="week-chart-wrap">
+      <div class="week-chart-title">本周时间花费</div>
+      <div class="week-legend">
+        <span><i class="dot" style="background:#a7f3d0"></i>深度工作</span>
+        <span><i class="dot" style="background:#fde68a"></i>浅层处理</span>
+        <span><i class="dot" style="background:#bae6fd"></i>休息放松</span>
+        <span><i class="dot" style="background:#e2e8f0"></i>无意识摸鱼</span>
+        <span><i class="dot" style="background:#f1f5f9"></i>未设置</span>
+      </div>
+      <div class="week-bars">
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 1.2;">4.3</div>
+            <div class="week-seg deep" style="flex: 2.5;">2.5</div>
+            <div class="week-seg shallow" style="flex: 1.3;">1.3</div>
+            <div class="week-seg rest" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/17</div>
+          <div class="week-total">4.8h</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 2;">6</div>
+            <div class="week-seg deep" style="flex: 3;">3</div>
+            <div class="week-seg rest" style="flex: 2;">2</div>
+          </div>
+          <div class="week-date">11/18</div>
+          <div class="week-total">5h</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 3;">9</div>
+            <div class="week-seg shallow" style="flex: 2;">2</div>
+            <div class="week-seg rest" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/19</div>
+          <div class="week-total">3h</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 2.5;">7.5</div>
+            <div class="week-seg deep" style="flex: 2;">2</div>
+            <div class="week-seg rest" style="flex: 1.5;">1.5</div>
+          </div>
+          <div class="week-date">11/20</div>
+          <div class="week-total">3.5h</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 4;">12</div>
+            <div class="week-seg deep" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/21</div>
+          <div class="week-total">1h</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 2;">6</div>
+            <div class="week-seg rest" style="flex: 3;">3</div>
+            <div class="week-seg shallow" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/22</div>
+          <div class="week-total">4h</div>
+        </div>
+        <div class="week-bar-col">
+          <div class="week-bar">
+            <div class="week-seg unset" style="flex: 3;">9</div>
+            <div class="week-seg deep" style="flex: 2;">2</div>
+            <div class="week-seg rest" style="flex: 1;">1</div>
+          </div>
+          <div class="week-date">11/23</div>
+          <div class="week-total">3h</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
