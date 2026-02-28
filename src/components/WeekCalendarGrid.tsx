@@ -5,8 +5,8 @@ import { CATEGORY_COLORS } from "@/lib/categoryColors"
 import { getDateKey } from "@/lib/storage"
 import { cn } from "@/lib/utils"
 
-const HOURS = 15
-const START_HOUR = 8
+const DEFAULT_HOURS = 15
+const DEFAULT_START_HOUR = 8
 const SLOT_HEIGHT = 28
 
 function getWeekStart(d: Date): Date {
@@ -16,6 +16,32 @@ function getWeekStart(d: Date): Date {
   copy.setDate(copy.getDate() + diff)
   copy.setHours(0, 0, 0, 0)
   return copy
+}
+
+function computeWeekRange(weekRecords: Record<string, TimeRecord[]>): { startHour: number; hours: number } {
+  let earliestHour = 24
+  let latestHour = 0
+  let hasRecords = false
+
+  for (const records of Object.values(weekRecords)) {
+    for (const r of records) {
+      hasRecords = true
+      const s = new Date(r.startTime)
+      const e = new Date(r.endTime)
+      earliestHour = Math.min(earliestHour, s.getHours())
+      const eH = e.getHours()
+      const eM = e.getMinutes()
+      latestHour = Math.max(latestHour, eM > 0 ? eH + 1 : eH)
+    }
+  }
+
+  if (!hasRecords) {
+    return { startHour: DEFAULT_START_HOUR, hours: DEFAULT_HOURS }
+  }
+
+  const startHour = Math.max(0, Math.min(earliestHour, DEFAULT_START_HOUR))
+  const endHour = Math.min(24, Math.max(latestHour, DEFAULT_START_HOUR + DEFAULT_HOURS))
+  return { startHour, hours: endHour - startHour }
 }
 
 interface WeekCalendarGridProps {
@@ -30,7 +56,8 @@ export function WeekCalendarGrid({ weekRecords, weekStart }: WeekCalendarGridPro
     return d
   })
 
-  const totalHeight = HOURS * SLOT_HEIGHT
+  const { startHour, hours } = computeWeekRange(weekRecords)
+  const totalHeight = hours * SLOT_HEIGHT
 
   const renderBlocks = (dateKey: string) => {
     const records = weekRecords[dateKey] ?? []
@@ -39,7 +66,7 @@ export function WeekCalendarGrid({ weekRecords, weekStart }: WeekCalendarGridPro
       const end = new Date(r.endTime)
       const startMinutes = start.getHours() * 60 + start.getMinutes()
       const endMinutes = end.getHours() * 60 + end.getMinutes()
-      const top = ((startMinutes - START_HOUR * 60) / 60) * SLOT_HEIGHT
+      const top = ((startMinutes - startHour * 60) / 60) * SLOT_HEIGHT
       const height = ((endMinutes - startMinutes) / 60) * SLOT_HEIGHT
       const color = CATEGORY_COLORS[r.category]?.bg ?? "#94a3b8"
       if (top < 0 || top + height > totalHeight) return null
@@ -66,13 +93,13 @@ export function WeekCalendarGrid({ weekRecords, weekStart }: WeekCalendarGridPro
         <div className="min-w-[500px] flex">
           <div className="w-10 shrink-0 bg-muted/50 border-r border-border flex flex-col">
             <div className="h-10 shrink-0" />
-            {Array.from({ length: HOURS }).map((_, i) => (
+            {Array.from({ length: hours }).map((_, i) => (
               <div
                 key={i}
                 className="flex items-start justify-end pr-1.5 pt-0.5 text-[10px] text-muted-foreground"
                 style={{ height: SLOT_HEIGHT }}
               >
-                {START_HOUR + i}:00
+                {startHour + i}:00
               </div>
             ))}
           </div>

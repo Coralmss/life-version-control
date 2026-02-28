@@ -29,7 +29,11 @@ interface ColorInfo {
   text: string
 }
 
-export function HistoryTab() {
+interface HistoryTabProps {
+  refreshKey?: number
+}
+
+export function HistoryTab({ refreshKey = 0 }: HistoryTabProps) {
   const [mounted, setMounted] = useState(false)
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [manualOpen, setManualOpen] = useState(false)
@@ -38,6 +42,7 @@ export function HistoryTab() {
   const [records, setRecords] = useState<TimeRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [categoryColors, setCategoryColors] = useState<Record<string, ColorInfo>>({})
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -68,7 +73,7 @@ export function HistoryTab() {
       }
     }
     loadRecords()
-  }, [mounted, selectedDate, version])
+  }, [mounted, selectedDate, version, refreshKey])
 
   const totalSeconds = records.reduce((sum, r) => sum + r.duration, 0)
   const avgSeconds = records.length > 0 ? Math.round(totalSeconds / records.length) : 0
@@ -165,66 +170,95 @@ export function HistoryTab() {
         <div className="space-y-2">
           {records.map((r) => {
             const color = getColor(r.category)
+            const hasSubtasks = r.subtasks && r.subtasks.length > 0
+            const isExpanded = expandedId === r.id
             return (
-              <div
-                key={r.id}
-                className="bg-card rounded-xl border border-border p-3 flex items-center gap-3"
-              >
-                {/* Color bar */}
+              <div key={r.id}>
                 <div
-                  className="w-1 self-stretch rounded-full shrink-0"
-                  style={{ backgroundColor: color.bg }}
-                />
+                  className={cn(
+                    "bg-card rounded-xl border border-border p-3 flex items-center gap-3",
+                    hasSubtasks && "cursor-pointer"
+                  )}
+                  onClick={() => hasSubtasks && setExpandedId(isExpanded ? null : r.id)}
+                >
+                  {/* Color bar */}
+                  <div
+                    className="w-1 self-stretch rounded-full shrink-0"
+                    style={{ backgroundColor: color.bg }}
+                  />
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">
-                    {r.taskName}
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">
+                      {r.taskName}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                      <span>
+                        {fmtTime(r.startTime)} - {fmtTime(r.endTime)}
+                      </span>
+                      <span
+                        className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                        style={{
+                          backgroundColor: color.bg,
+                          color: color.text,
+                        }}
+                      >
+                        {r.category}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                    <span>
-                      {fmtTime(r.startTime)} - {fmtTime(r.endTime)}
+
+                  {/* Subtask indicator */}
+                  {hasSubtasks && (
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {r.subtasks!.length}子任务 {isExpanded ? "▲" : "▼"}
                     </span>
-                    <span
-                      className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                      style={{
-                        backgroundColor: color.bg,
-                        color: color.text,
-                      }}
+                  )}
+
+                  {/* Duration */}
+                  <div className="text-sm font-semibold shrink-0">
+                    {fmtDuration(r.duration)}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(r)}
+                      className={cn(
+                        "h-7 w-7 rounded-md flex items-center justify-center",
+                        "bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors"
+                      )}
                     >
-                      {r.category}
-                    </span>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(r)}
+                      className={cn(
+                        "h-7 w-7 rounded-md flex items-center justify-center",
+                        "bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                      )}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Duration */}
-                <div className="text-sm font-semibold shrink-0">
-                  {fmtDuration(r.duration)}
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(r)}
-                    className={cn(
-                      "h-7 w-7 rounded-md flex items-center justify-center",
-                      "bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors"
-                    )}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(r)}
-                    className={cn(
-                      "h-7 w-7 rounded-md flex items-center justify-center",
-                      "bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                    )}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                {/* 展开的子任务列表 */}
+                {isExpanded && r.subtasks && (
+                  <div className="ml-6 mt-1 mb-2 space-y-1 pl-3 border-l-2 border-border">
+                    {r.subtasks.map((st, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs text-muted-foreground py-1">
+                        <span>{st.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span>{fmtTime(st.startTime)} - {fmtTime(st.endTime)}</span>
+                          <span className="font-mono">{fmtDuration(st.duration)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )
           })}

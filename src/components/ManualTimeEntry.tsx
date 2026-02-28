@@ -159,6 +159,7 @@ export function ManualTimeEntry({
       duration,
       category,
       energyLevel: energy,
+      subtasks: editRecord?.subtasks,
     }
 
     setLoading(true)

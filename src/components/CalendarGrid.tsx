@@ -5,8 +5,8 @@ import { CATEGORY_COLORS } from "@/lib/categoryColors"
 import { getDateKey } from "@/lib/storage"
 import { cn } from "@/lib/utils"
 
-const RANGE_START = 8
-const RANGE_END = 23
+const DEFAULT_RANGE_START = 8
+const DEFAULT_RANGE_END = 23
 
 const ACTIVE_PX = 80
 const PASS_PX = 24
@@ -30,6 +30,31 @@ function fmtTime(iso: string) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
 }
 
+// ── Dynamic range computation ──
+
+function computeRange(records: TimeRecord[]): { rangeStart: number; rangeEnd: number } {
+  if (records.length === 0) {
+    return { rangeStart: DEFAULT_RANGE_START, rangeEnd: DEFAULT_RANGE_END }
+  }
+
+  let earliestHour = 24
+  let latestHour = 0
+
+  for (const r of records) {
+    const s = new Date(r.startTime)
+    const e = new Date(r.endTime)
+    earliestHour = Math.min(earliestHour, s.getHours())
+    const eH = e.getHours()
+    const eM = e.getMinutes()
+    latestHour = Math.max(latestHour, eM > 0 ? eH + 1 : eH)
+  }
+
+  const rangeStart = Math.max(0, Math.min(earliestHour, DEFAULT_RANGE_START))
+  const rangeEnd = Math.min(24, Math.max(latestHour, DEFAULT_RANGE_END))
+
+  return { rangeStart, rangeEnd }
+}
+
 // ── Variable-height time axis ──
 
 type HourKind = "active" | "pass" | "empty"
@@ -40,11 +65,11 @@ interface Seg {
   kind: HourKind
 }
 
-function buildAxis(records: TimeRecord[]): { segs: Seg[]; total: number } {
+function buildAxis(records: TimeRecord[], rangeStart: number, rangeEnd: number): { segs: Seg[]; total: number } {
   if (records.length === 0) {
     const segs: Seg[] = []
     let y = 0
-    for (let h = RANGE_START; h < RANGE_END; h++) {
+    for (let h = rangeStart; h < rangeEnd; h++) {
       segs.push({ hour: h, y, h: DEFAULT_PX, kind: "empty" })
       y += DEFAULT_PX
     }
@@ -76,7 +101,7 @@ function buildAxis(records: TimeRecord[]): { segs: Seg[]; total: number } {
 
   const segs: Seg[] = []
   let y = 0
-  for (let h = RANGE_START; h < RANGE_END; h++) {
+  for (let h = rangeStart; h < rangeEnd; h++) {
     const kind: HourKind = padded.has(h) ? "active" : passThru.has(h) ? "pass" : "empty"
     const height = kind === "active" ? ACTIVE_PX : kind === "pass" ? PASS_PX : EMPTY_PX
     segs.push({ hour: h, y, h: height, kind })
@@ -85,8 +110,8 @@ function buildAxis(records: TimeRecord[]): { segs: Seg[]; total: number } {
   return { segs, total: y }
 }
 
-function toY(min: number, segs: Seg[]): number {
-  const c = Math.max(RANGE_START * 60, Math.min(min, RANGE_END * 60))
+function toY(min: number, segs: Seg[], rangeStart: number, rangeEnd: number): number {
+  const c = Math.max(rangeStart * 60, Math.min(min, rangeEnd * 60))
   for (const s of segs) {
     const end = (s.hour + 1) * 60
     if (c < end) return s.y + ((c - s.hour * 60) / 60) * s.h
@@ -126,7 +151,7 @@ interface Placed {
   color: string
 }
 
-function doLayout(records: TimeRecord[], segs: Seg[], totalH: number): Placed[] {
+function doLayout(records: TimeRecord[], segs: Seg[], totalH: number, rangeStart: number, rangeEnd: number): Placed[] {
   const parsed = records
     .map((r) => {
       const s = new Date(r.startTime)
@@ -137,14 +162,14 @@ function doLayout(records: TimeRecord[], segs: Seg[], totalH: number): Placed[] 
         eMin: Math.max(e.getHours() * 60 + e.getMinutes(), s.getHours() * 60 + s.getMinutes() + 1),
       }
     })
-    .filter((b) => b.sMin < RANGE_END * 60 && b.eMin > RANGE_START * 60)
+    .filter((b) => b.sMin < rangeEnd * 60 && b.eMin > rangeStart * 60)
     .sort((a, b) => a.sMin - b.sMin)
 
   if (!parsed.length) return []
 
   const withY = parsed.map((b) => {
-    const sy = toY(b.sMin, segs)
-    const ey = Math.max(toY(b.eMin, segs), sy + MIN_PX)
+    const sy = toY(b.sMin, segs, rangeStart, rangeEnd)
+    const ey = Math.max(toY(b.eMin, segs, rangeStart, rangeEnd), sy + MIN_PX)
     return { ...b, sy, ey }
   })
 
@@ -225,8 +250,9 @@ export function CalendarGrid({ columns }: CalendarGridProps) {
   const col = columns[0]
   if (!col) return null
 
-  const { segs, total } = buildAxis(col.records)
-  const blocks = doLayout(col.records, segs, total)
+  const { rangeStart, rangeEnd } = computeRange(col.records)
+  const { segs, total } = buildAxis(col.records, rangeStart, rangeEnd)
+  const blocks = doLayout(col.records, segs, total, rangeStart, rangeEnd)
   const isToday = getDateKey(col.date) === getDateKey(new Date())
   const wk = ["日", "一", "二", "三", "四", "五", "六"][col.date.getDay()]
 

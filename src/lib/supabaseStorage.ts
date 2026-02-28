@@ -185,6 +185,7 @@ export async function updateRecord(oldDateStr: string, record: TimeRecord): Prom
       duration: dbRecord.duration,
       category: dbRecord.category,
       energy_level: dbRecord.energy_level,
+      subtasks: dbRecord.subtasks,
     })
     .eq('id', record.id)
     .eq('user_id', user.id)

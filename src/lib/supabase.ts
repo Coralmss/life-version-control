@@ -20,6 +20,7 @@ export interface Database {
           duration: number
           category: string
           energy_level: number
+          subtasks: any | null
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['time_records']['Row'], 'created_at'>
@@ -53,6 +54,7 @@ export function toDbRecord(record: TimeRecord, userId: string): Database['public
     duration: record.duration,
     category: record.category,
     energy_level: record.energyLevel,
+    subtasks: record.subtasks && record.subtasks.length > 0 ? record.subtasks : null,
   }
 }
 
@@ -66,5 +68,8 @@ export function fromDbRecord(row: Database['public']['Tables']['time_records']['
     duration: row.duration,
     category: row.category,
     energyLevel: row.energy_level as -1 | 0 | 1,
+    subtasks: row.subtasks
+      ? (typeof row.subtasks === 'string' ? JSON.parse(row.subtasks) : row.subtasks)
+      : undefined,
   }
 }

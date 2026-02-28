@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Play, Square, Plus } from "lucide-react"
+import { Play, Square, Plus, ArrowRightLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import type { TaskCategory, EnergyLevel, TimeRecord } from "@/types"
+import type { TaskCategory, EnergyLevel, TimeRecord, SubtaskRecord } from "@/types"
 import { ENERGY_EMOJI, ENERGY_LABELS } from "@/types"
 import { saveRecord } from "@/lib/supabaseStorage"
 import { getCategories, type CategoryInfo } from "@/lib/supabaseCategories"
@@ -42,6 +42,12 @@ export function FocusTab({ onRecordSaved }: FocusTabProps) {
   const [manualEntryOpen, setManualEntryOpen] = useState(false)
   const [categories, setCategories] = useState<CategoryInfo[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
+
+  // 子任务状态
+  const [subtasks, setSubtasks] = useState<SubtaskRecord[]>([])
+  const [currentSubtask, setCurrentSubtask] = useState("")
+  const [activeSubtaskName, setActiveSubtaskName] = useState<string | null>(null)
+  const [subtaskStartTime, setSubtaskStartTime] = useState<Date | null>(null)
 
   // 加载分类
   useEffect(() => {
@@ -74,9 +80,57 @@ export function FocusTab({ onRecordSaved }: FocusTabProps) {
     setStartTime(new Date())
     setIsRunning(true)
     setElapsed(0)
+    setSubtasks([])
+    setActiveSubtaskName(null)
+    setSubtaskStartTime(null)
+    setCurrentSubtask("")
+  }
+
+  const handleStartSubtask = () => {
+    const name = currentSubtask.trim()
+    if (!name || !isRunning) return
+
+    const now = new Date()
+
+    // 结束当前活跃的子任务
+    if (activeSubtaskName && subtaskStartTime) {
+      const duration = Math.floor((now.getTime() - subtaskStartTime.getTime()) / 1000)
+      setSubtasks((prev) => [
+        ...prev,
+        {
+          name: activeSubtaskName,
+          startTime: subtaskStartTime.toISOString(),
+          endTime: now.toISOString(),
+          duration,
+        },
+      ])
+    }
+
+    // 开始新的子任务
+    setActiveSubtaskName(name)
+    setSubtaskStartTime(now)
+    setCurrentSubtask("")
   }
 
   const handleStop = () => {
+    const now = new Date()
+
+    // 结束当前活跃的子任务
+    if (activeSubtaskName && subtaskStartTime) {
+      const duration = Math.floor((now.getTime() - subtaskStartTime.getTime()) / 1000)
+      setSubtasks((prev) => [
+        ...prev,
+        {
+          name: activeSubtaskName,
+          startTime: subtaskStartTime.toISOString(),
+          endTime: now.toISOString(),
+          duration,
+        },
+      ])
+      setActiveSubtaskName(null)
+      setSubtaskStartTime(null)
+    }
+
     setIsRunning(false)
     setModalOpen(true)
   }
@@ -96,6 +150,7 @@ export function FocusTab({ onRecordSaved }: FocusTabProps) {
       duration,
       category: selectedCategory,
       energyLevel: energy,
+      subtasks: subtasks.length > 0 ? subtasks : undefined,
     }
 
     try {
@@ -109,6 +164,10 @@ export function FocusTab({ onRecordSaved }: FocusTabProps) {
       setSelectedCategory(null)
       setSelectedEnergy(null)
       setCurrentFeeling(null)
+      setSubtasks([])
+      setActiveSubtaskName(null)
+      setSubtaskStartTime(null)
+      setCurrentSubtask("")
     } catch (e) {
       console.error("Failed to save record:", e)
       alert("保存失败，请重试")
@@ -189,6 +248,63 @@ export function FocusTab({ onRecordSaved }: FocusTabProps) {
               ))}
             </div>
           </div>
+
+          {/* 子任务区域 */}
+          <div className="border-t border-border pt-4">
+            <p className="text-sm text-muted-foreground mb-2">子任务（可选）</p>
+            <div className="flex gap-2 mb-3">
+              <Input
+                placeholder="子任务名称，如：查资料"
+                value={currentSubtask}
+                onChange={(e) => setCurrentSubtask(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleStartSubtask()}
+                className="flex-1 text-sm"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleStartSubtask}
+                disabled={!currentSubtask.trim()}
+                className="gap-1 shrink-0"
+              >
+                {activeSubtaskName ? (
+                  <>
+                    <ArrowRightLeft className="h-3.5 w-3.5" />
+                    切换
+                  </>
+                ) : (
+                  "开始"
+                )}
+              </Button>
+            </div>
+
+            {/* 当前活跃子任务 */}
+            {activeSubtaskName && subtaskStartTime && (
+              <div className="bg-primary/10 rounded-lg px-3 py-2 text-sm flex items-center justify-between">
+                <span>
+                  <span className="text-muted-foreground">当前：</span>
+                  <span className="font-medium">{activeSubtaskName}</span>
+                </span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  {formatDuration(
+                    Math.floor((Date.now() - subtaskStartTime.getTime()) / 1000)
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* 已完成的子任务列表 */}
+            {subtasks.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {subtasks.map((st, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                    <span>{st.name}</span>
+                    <span className="font-mono">{formatDuration(st.duration)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -230,6 +346,23 @@ export function FocusTab({ onRecordSaved }: FocusTabProps) {
                   <p className="text-sm text-muted-foreground mt-1">
                     时长 {formatDuration(elapsed)}
                   </p>
+                )}
+                {subtasks.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      子任务（{subtasks.length}）
+                    </p>
+                    <div className="space-y-1">
+                      {subtasks.map((st, i) => (
+                        <div key={i} className="flex justify-between text-xs">
+                          <span>{st.name}</span>
+                          <span className="text-muted-foreground font-mono">
+                            {formatDuration(st.duration)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}

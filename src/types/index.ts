@@ -1,6 +1,13 @@
 export type TaskCategory = string
 export type EnergyLevel = -1 | 0 | 1
 
+export interface SubtaskRecord {
+  name: string
+  startTime: string  // ISO string
+  endTime: string    // ISO string
+  duration: number   // seconds
+}
+
 export interface TimeRecord {
   id: string
   taskName: string
@@ -9,6 +16,7 @@ export interface TimeRecord {
   duration: number // seconds
   category: TaskCategory
   energyLevel: EnergyLevel
+  subtasks?: SubtaskRecord[]
 }
 
 export const ENERGY_EMOJI: Record<EnergyLevel, string> = {

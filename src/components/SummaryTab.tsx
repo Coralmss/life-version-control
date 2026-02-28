@@ -9,6 +9,7 @@ import { DateSelector, type ViewMode } from "@/components/DateSelector"
 import { CalendarGrid } from "@/components/CalendarGrid"
 import { PieChart, type PieSlice } from "@/components/PieChart"
 import { TimeSpendChart } from "@/components/TimeSpendChart"
+import { EnergyChart } from "@/components/EnergyChart"
 import { ManualTimeEntry } from "@/components/ManualTimeEntry"
 import { cn } from "@/lib/utils"
 
@@ -55,7 +56,11 @@ function computePieSlices(
   return { slices, totalRecorded }
 }
 
-export function SummaryTab() {
+interface SummaryTabProps {
+  refreshKey?: number
+}
+
+export function SummaryTab({ refreshKey = 0 }: SummaryTabProps) {
   const [mounted, setMounted] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>("day")
   const [selectedDate, setSelectedDate] = useState(() => new Date())
@@ -63,7 +68,7 @@ export function SummaryTab() {
   const [dayRecords, setDayRecords] = useState<TimeRecord[]>([])
   const [weekRecords, setWeekRecords] = useState<Record<string, TimeRecord[]>>({})
   const [loading, setLoading] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [localRefresh, setLocalRefresh] = useState(0)
 
   useEffect(() => {
     setMounted(true)
@@ -89,7 +94,7 @@ export function SummaryTab() {
       }
     }
     loadData()
-  }, [mounted, selectedDate, refreshKey])
+  }, [mounted, selectedDate, refreshKey, localRefresh])
 
   const recordsForPie = useMemo(() => {
     if (viewMode === "day") return dayRecords
@@ -110,7 +115,7 @@ export function SummaryTab() {
   )
 
   const refreshRecords = useCallback(() => {
-    setRefreshKey((k) => k + 1)
+    setLocalRefresh((k) => k + 1)
   }, [])
 
   const weekStart = useMemo(() => getWeekStart(selectedDate), [selectedDate])
@@ -197,6 +202,16 @@ export function SummaryTab() {
             weekStart={weekStart}
             getDateKey={getDateKey}
           />
+
+          {/* 2.5 精力曲线（仅日视图） */}
+          {viewMode === "day" && dayRecords.length > 0 && (
+            <div className="rounded-2xl border border-border bg-muted/30 p-4">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                精力曲线
+              </h3>
+              <EnergyChart records={dayRecords} className="flex justify-center" />
+            </div>
+          )}
 
           {/* 3. 时间块（仅日视图） */}
           {viewMode === "day" && (
